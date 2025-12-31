@@ -1,0 +1,53 @@
+
+<!-- PROGRAMA REALIZADO POR DIEGO PALENCIA MARTINEZ -->
+<!-- ASIGNATURA FUNDAMENTOS DE TECNOLOGIA DE VIDEOJUEGOS 2025 -->
+<!-- UNIVERSIDAD REY JUAN CARLOS -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders - Diego Palencia</title>
+    <link rel="shortcut icon" href="/img/favicon_static.ico" type="image/x-icon">
+    <link rel="icon" href="/img/favicon_animated.ico" type="image/x-icon"> 
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="main-container">
+        <canvas id="gameCanvas" width="448" height="612"></canvas>
+        
+        <div id="controls-panel">
+            <h3>CONTROLES</h3>
+            <div class="control-item">
+                <div class="keys-group">
+                    <span class="key">←</span>
+                    <span class="key">→</span>
+                </div>
+                <span class="action">MOVER</span>
+            </div>
+            <div class="control-item">
+                <span class="key" style="width: 60px;">SPACE</span> 
+                <span class="action">DISPARAR</span>
+            </div>
+            <div class="control-item">
+                <span class="key">ESC</span> 
+                <span class="action">PAUSAR</span>
+            </div>
+            <div class="control-item" style="transform: scale(0.7); transform-origin: left;">
+                <span class="key">M</span> 
+                <span class="action">MUTE</span>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Trabajo realizado por Diego Palencia Martinez para la asignatura de Fundamentos de Tecnologia de Videojuego<br>
+        Universidad Rey Juan Carlos - Grado en Diseño y Desarrollo de Videojuegos 2025
+    </footer>
+
+    <script src="game.js"></script>
+</body>
+</html>
