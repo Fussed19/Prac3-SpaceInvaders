@@ -553,7 +553,7 @@ function gameLoop(timestamp) {
     lastTime = timestamp;
     update(dt);
     render();
-    requestAnimationFrame(loop);
+    requestAnimationFrame(gameLoop);
 }
 
 createInvaders();
