@@ -21,6 +21,7 @@ spriteSheet.onload = () => spritesLoaded = true;
 const logoImage = new Image();
 logoImage.src = "img/logo.png";
 
+//Definición de sprites según su posición en la hoja de sprites
 const SPRITES = {
     INVADER_1: { x: 0, y: 0, w: 16, h: 16 }, INVADER_1B: { x: 16, y: 0, w: 16, h: 16 },
     INVADER_2: { x: 32, y: 0, w: 22, h: 16 }, INVADER_2B: { x: 54, y: 0, w: 22, h: 16 },
@@ -42,7 +43,7 @@ const SPRITES = {
 /////////
 //AUDIO//
 /////////
-
+//Rutas de audio
 const sounds = {
     shoot: new Audio("audio/shoot.wav"),
     invaderKill: new Audio("audio/invaderkilled.wav"),
@@ -53,11 +54,12 @@ const sounds = {
     title: new Audio("audio/title.mp3"),
     move: ["fastinvader1", "fastinvader2", "fastinvader3", "fastinvader4"].map(f => new Audio(`audio/${f}.wav`))
 };
-
+//Volúmen y variables sonido
 let muted = false;
 Object.values(sounds).flat().forEach(s => s.volume = 0.4);
 sounds.ufo.volume = 1.0;
 
+//Funciones para reproducir y detener sonidos
 function playSound(sound, loop = false) {
     if (muted) return;
     sound.loop = loop;
@@ -83,7 +85,7 @@ function togglePause() {
 /////////
 //INPUT//
 /////////
-
+//Estado de teclas
 const keys = {};
 window.addEventListener("keydown", e => {
     keys[e.code] = true;
@@ -100,12 +102,13 @@ window.addEventListener("keydown", e => {
     }
 });
 window.addEventListener("keyup", e => keys[e.code] = false);
+//Pausa al perder foco (salirse de la ventana)
 window.addEventListener("blur", () => { if (gameState === STATES.PLAYING) togglePause(); });
 
 ///////////////
 //CLASES BASE//
 ///////////////
-
+//Entidad base (posición, tamaño, estado activo)
 class Entity {
     constructor(x, y, w, h) {
         this.x = x; this.y = y; this.width = w; this.height = h;
@@ -116,13 +119,13 @@ class Entity {
         if (spritesLoaded) ctx.drawImage(spriteSheet, s.x, s.y, s.w, s.h, x, y, s.w, s.h);
     }
 
-    checkCollision(other) {
+    checkCollision(other) { //Colisión AABB (Rectangulos alineados a ejes)
         return this.active && other.active &&
                this.x < other.x + other.width && this.x + this.width > other.x &&
                this.y < other.y + other.height && this.y + this.height > other.y;
     }
 }
-
+//Para entidades que explotan(sprite de muerte y temporizador)
 class Explodable extends Entity {
     constructor(x, y, w, h) {
         super(x, y, w, h);
@@ -142,12 +145,12 @@ class Explodable extends Entity {
         return false;
     }
 
-    explode(time = 200) {
+    explode(time = 200) { //Duración de la explosión en ms
         this.exploding = true;
         this.explosionTimer = time;
     }
 
-    draw() {
+    draw() { //Dibujado del sprite de explosión
         if (this.exploding) this.drawSprite(SPRITES.EXPLOSION);
     }
 }
@@ -155,7 +158,7 @@ class Explodable extends Entity {
 ////////////////////
 //CLASES DEL JUEGO//
 ////////////////////
-
+//Jugador
 class Player extends Entity {
     constructor() {
         super(canvas.width / 2 - 13, canvas.height - 90, 26, 16);
@@ -172,10 +175,10 @@ class Player extends Entity {
             if (this.deathTimer <= 0) this.dead = false;
             return;
         }
-
+        //Movimiento
         if (keys["ArrowLeft"]) this.x = Math.max(0, this.x - this.speed * dt / 1000);
         if (keys["ArrowRight"]) this.x = Math.min(canvas.width - this.width, this.x + this.speed * dt / 1000);
-        
+        //Disparo
         if (keys["Space"] && this.shootCooldown <= 0) {
             bullets.push(new Bullet(this.x + 11, this.y - 4, -400, "green"));
             this.shootCooldown = 500;
@@ -183,7 +186,7 @@ class Player extends Entity {
         }
         this.shootCooldown -= dt;
     }
-
+    //MUERTE
     kill() {
         this.dead = true;
         this.deathTimer = 1000;
@@ -193,7 +196,7 @@ class Player extends Entity {
     }
 
     draw() {
-        this.drawSprite(this.dead ? SPRITES.DEADPLAYER : SPRITES.PLAYER);
+        this.drawSprite(this.dead ? SPRITES.DEADPLAYER : SPRITES.PLAYER); //Dibuja el sprite correspondiente
         // Vidas
         if (this.lives > 0) {
             const num = SPRITES.NUMBERS[this.lives];
@@ -202,7 +205,7 @@ class Player extends Entity {
         }
     }
 }
-
+//Invasores
 class Invader extends Explodable {
     constructor(x, y, type, points) {
         const s = SPRITES[`INVADER_${type}`];
@@ -217,7 +220,7 @@ class Invader extends Explodable {
         else if (this.active) this.drawSprite(animFrame === 0 ? this.spriteA : this.spriteB);
     }
 }
-
+//Balas en general
 class Bullet extends Explodable {
     constructor(x, y, speed, color) {
         super(x, y, 2, 12);
@@ -229,7 +232,7 @@ class Bullet extends Explodable {
     update(dt) {
         if (super.update(dt)) return;
         this.y += this.speed * dt / 1000;
-        if (this.y <= 50 || this.y >= canvas.height - 60) this.explode(150);
+        if (this.y <= 50 || this.y >= canvas.height - 60) this.explode(150); //explota al pasarse de la oleada en altura
         
         //Colisión suelo
         if (this.y >= canvas.height - 60 && this.speed > 0) {
@@ -250,7 +253,7 @@ class Bullet extends Explodable {
         }
     }
 }
-
+//Nave nodriza (UBO)
 class Nodriza extends Explodable {
     constructor() {
         super(0, 70, SPRITES.NODRIZA.w, SPRITES.NODRIZA.h);
@@ -264,11 +267,11 @@ class Nodriza extends Explodable {
     update(dt) {
         if (super.update(dt)) return;
         this.x += this.direction * this.speed * dt / 1000;
-        this.timeAlive -= dt;
+        this.timeAlive -= dt; //Actualiza tiempo de vida
 
         if (!this.entered) {
             if (this.x > 0 && this.x < canvas.width - this.width) this.entered = true;
-        } else {
+        } else { //Cambia dirección al llegar a los bordes
             if (this.x <= 0) { this.x = 0; this.direction = 1; }
             else if (this.x >= canvas.width - this.width) { this.x = canvas.width - this.width; this.direction = -1; }
         }
@@ -281,21 +284,22 @@ class Nodriza extends Explodable {
         else if (this.active) this.drawSprite(SPRITES.NODRIZA);
     }
 }
-
+//Bunkers
 class Bunker extends Entity {
     constructor(x, y) {
         super(x, y, 44, 32);
         this.stage = 0;
         this.hp = 1;
     }
-
+    //Cuando recibe un impacto
     hit() {
-        if (this.stage >= 4) {
+        if (this.stage >= 4) { //etapa final, es irrompible en un 65%, si no, se destruye
             if (Math.random() < 0.35) this.active = false;
             return;
         }
+        //Resto de etapas
         this.hp--;
-        if (this.hp <= 0) {
+        if (this.hp <= 0) { 
             this.stage++;
             this.hp = [1, 3, 2, 1, 1][this.stage] || 1;
         }
@@ -310,13 +314,15 @@ class Bunker extends Entity {
 //LOGICA PRINCIPAL//
 ////////////////////
 
+//Variables globales del juego
 let player, bullets = [], invaders = [], bunkers = [], nodriza = null;
 let score = 0, gameOverPlayed = false;
 let invaderDir = 1, invaderSpeed = 5, invaderAnimTimer = 0, invaderAnimFrame = 0;
 let invaderShootTimer = 0, invaderShootDelay = 1500, nodrizaTimer = 0, moveSoundIdx = 0;
 let aliensKilled = 0, speedBoost = 0;
-const ground = new Array(canvas.width).fill(true);
+const ground = new Array(canvas.width).fill(true); //Suelo, array de bool para saber si pintar o no
 
+//Crear invasores en formación
 function createInvaders() {
     invaders = [];
     const startX = (canvas.width - (10 * 40)) / 2;
@@ -329,7 +335,7 @@ function createInvaders() {
     }
     playSound(sounds.createInvaders);
 }
-
+//Iniciar juego, reiniciar variables
 function startGame() {
     score = 0;
     gameOverPlayed = false;
@@ -350,16 +356,16 @@ function startGame() {
     const spacing = canvas.width / 5;
     for (let i = 1; i <= 4; i++) bunkers.push(new Bunker(spacing * i - 24, player.y - 60));
 }
-
+//Volver a la pantalla de título
 function goToTitle() {
     gameState = STATES.TITLE;
     stopSound(sounds.ufo);
     playSound(sounds.title, true);
 }
-
+//Actualizar lógica del juego (TODA)
 function update(dt) {
-    if (gameState !== STATES.PLAYING && gameState !== STATES.GAMEOVER) return;
-    if (gameState === STATES.GAMEOVER) {
+    if (gameState !== STATES.PLAYING && gameState !== STATES.GAMEOVER) return; //Solo actualizar en juego o gameover
+    if (gameState === STATES.GAMEOVER) { //Reproducir sonido de game over una vez (si no se repite en bucle)
         if (!gameOverPlayed) {
             stopSound(sounds.ufo);
             playSound(sounds.gameOver);
@@ -368,9 +374,9 @@ function update(dt) {
         return;
     }
 
-    player.update(dt);
+    player.update(dt); //Actualizar jugador
 
-    // Nodriza
+    //Act Nodriza, timer y aparición
     nodrizaTimer += dt;
     if (!nodriza && nodrizaTimer > 16000 && Math.random() < 0.05) {
         nodriza = new Nodriza();
@@ -382,7 +388,7 @@ function update(dt) {
         if (!nodriza.active) { nodriza = null; stopSound(sounds.ufo); }
     }
 
-    // Invasores
+    //Invasores y timer de animación
     invaderAnimTimer += dt;
     if (invaderAnimTimer >= 1000) {
         invaderAnimFrame = 1 - invaderAnimFrame;
@@ -390,7 +396,7 @@ function update(dt) {
         playSound(sounds.move[moveSoundIdx]);
         moveSoundIdx = (moveSoundIdx + 1) % 4;
     }
-
+    //Movimiento invasores
     let moveDown = false;
     const currentSpeed = (invaderSpeed + speedBoost) * dt / 1000;
     
@@ -420,7 +426,7 @@ function update(dt) {
         bullets.push(new Bullet(shooter.x + shooter.width/2, shooter.y + shooter.height, 250, "white"));
         invaderShootTimer = 0;
     }
-
+    //Reiniciar oleada si no quedan invasores
     if (activeInvaders.length === 0) {
         invaderSpeed += 10;
         score += 200;
@@ -456,7 +462,7 @@ function update(dt) {
                     score += inv.points;
                     b.active = false;
                     aliensKilled++;
-                    if (aliensKilled % 5 === 0) speedBoost += 1.5;
+                    if (aliensKilled % 5 === 0) speedBoost += 1.5; //Aumenta velocidad cada 5 aliens
                     break;
                 }
             }
@@ -484,8 +490,9 @@ function update(dt) {
 
     bullets = bullets.filter(b => b.active);
 }
-
+//Dibujado del juego
 function render() {
+    //Pantalla de título
     if (gameState === STATES.TITLE) {
         ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "white"; ctx.textAlign = "center";
@@ -504,7 +511,7 @@ function render() {
         ctx.font = "12px monospace"; ctx.fillText("Realizado por Diego Palencia Martinez", canvas.width/2, canvas.height - 20);
         return;
     }
-
+    //Pantalla de juego
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Suelo
@@ -524,13 +531,14 @@ function render() {
     player.drawSprite(SPRITES.SYMBOL_1, SPRITES.SCORE.w + 8, 10);
     [...scoreStr].forEach((c, i) => player.drawSprite(SPRITES.NUMBERS[c], 100 + i * 14, 10));
 
+    //Si es GAMEOOVER
     if (gameState === STATES.GAMEOVER) {
         ctx.textAlign = "center";
         ctx.fillStyle = "red"; ctx.font = "50px monospace";
         ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2 - 20);
         ctx.fillStyle = "white"; ctx.font = "20px monospace";
         ctx.fillText("PRESS ENTER TO RESTART", canvas.width/2, canvas.height/2 + 30);
-    } else if (gameState === STATES.PAUSED) {
+    } else if (gameState === STATES.PAUSED) { //Si está en PAUSA
         if (Math.floor(Date.now() / 500) % 2 === 0) {
             ctx.fillStyle = "red"; ctx.textAlign = "center"; ctx.font = "32px monospace";
             ctx.fillText("PAUSE", canvas.width/2, canvas.height/2 - 20);
@@ -539,21 +547,23 @@ function render() {
         ctx.fillText("PULSE ESC PARA CONTINUAR", canvas.width/2, canvas.height/2 + 20);
         ctx.fillText("PULSE ENTER PARA VOLVER AL TITULO", canvas.width/2, canvas.height/2 + 50);
     }
-    if (muted) {
+    if (muted) { //Texto de MUTE
         ctx.fillStyle = "white"; ctx.font = "16px monospace"; ctx.textAlign = "left";
         ctx.fillText("MUTE", canvas.width - 50, 20);
     }
     ctx.textAlign = "left";
 }
 
+//Bucle principal
 let lastTime = 0;
 
+//Timestamp es el tiempo de inicio que nos da el navegador
 function gameLoop(timestamp) {
-    const dt = timestamp - lastTime;
-    lastTime = timestamp;
+    const dt = timestamp - lastTime;//Delta time en ms
+    lastTime = timestamp; 
     update(dt);
     render();
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(gameLoop); //Siguiente frame
 }
 
 createInvaders();
